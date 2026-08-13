@@ -12,7 +12,7 @@ export default function Home() {
   // 2. 画面のUI構築
   return (
     <main className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">入出金記録一覧</h1>
+      <h1 className="text-2xl font-bold mb-6">💰 家計簿アプリ - 入出金記録一覧</h1>
       
       {/* 絞り込みボタン（機能は後で実装します） */}
       <div className="mb-6 flex gap-4">
