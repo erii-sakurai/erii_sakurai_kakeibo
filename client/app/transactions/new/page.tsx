@@ -36,7 +36,7 @@ export default function NewRecordPage() {
     }
 
     // ③ データベース(Recordテーブル)に保存。日付はDate型に変換する
-    await prisma.record.create({
+    await prisma.transaction.create({
       data: {
         title: validatedData.data.title,
         amount: validatedData.data.amount,
