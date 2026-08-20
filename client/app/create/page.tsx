@@ -1,55 +1,42 @@
-"use client"; // アラートなどのブラウザ機能を使うためのおまじない
-
 import Link from "next/link";
+import { prisma } from "@/lib/prisma"; // さっき作ったPrismaをインポート
 
-export default function CreateTransaction() {
+// データをデータベースから取得するため、関数に async をつけます
+export default async function Home() {
+  // Prismaを使って、データベースからすべての入出金データを新しい順に取得
+  const transactions = await prisma.transaction.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <main className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">✨ 新規登録</h1>
-      
-      <form className="bg-white p-6 rounded shadow-sm flex flex-col gap-4">
-        <div>
-          <label className="block text-sm text-gray-500 mb-1">日付</label>
-          <input type="date" className="border p-2 rounded w-full" required />
-        </div>
-        
-        <div>
-          <label className="block text-sm text-gray-500 mb-1">種類</label>
-          <select className="border p-2 rounded w-full">
-            <option value="expense">支出</option>
-            <option value="income">収入</option>
-          </select>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">💰 家計簿アプリ - 入出金記録一覧</h1>
+      </div>
 
-        <div>
-          <label className="block text-sm text-gray-500 mb-1">カテゴリ</label>
-          <input type="text" placeholder="例：カフェ、美容、給与など" className="border p-2 rounded w-full" required />
-        </div>
-
-        <div>
-          <label className="block text-sm text-gray-500 mb-1">金額（円）</label>
-          <input type="number" placeholder="例：1000" className="border p-2 rounded w-full" required />
-        </div>
-
-        <div>
-          <label className="block text-sm text-gray-500 mb-1">メモ</label>
-          <textarea placeholder="例：オーツミルクに変更" className="border p-2 rounded w-full" rows={3}></textarea>
-        </div>
-
-        <div className="mt-4 flex gap-4 justify-center">
-          <Link href="/" className="bg-gray-200 px-6 py-2 rounded font-bold hover:bg-gray-300 transition">
-            キャンセル
-          </Link>
-          {/* 今回のタスクではデータの登録処理はダミーでOKなので、押すとアラートが出るようにしています */}
-          <button 
-            type="button" 
-            onClick={() => alert("※今はダミーなので登録されません！")} 
-            className="bg-blue-500 text-white px-6 py-2 rounded font-bold hover:bg-blue-600 transition"
-          >
-            登録する
-          </button>
-        </div>
-      </form>
+      <div className="bg-white rounded shadow-sm overflow-hidden">
+        <ul className="divide-y divide-gray-200">
+          {transactions.map((tx) => (
+            <li key={tx.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+              <div>
+                <p className="text-sm text-gray-500">{tx.date} - <span className="font-semibold text-gray-700">{tx.category}</span></p>
+                <p className="text-lg font-medium">{tx.memo || "メモなし"}</p>
+              </div>
+              <div className="text-right flex items-center gap-4">
+                <span className={`text-lg font-bold ${tx.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
+                  {tx.type === 'income' ? '+' : '-'}{tx.amount.toLocaleString()}円
+                </span>
+                <Link 
+                  href={`/transactions/${tx.id}`} 
+                  className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm font-medium hover:bg-gray-200 transition"
+                >
+                  詳細を見る
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </main>
   );
 }

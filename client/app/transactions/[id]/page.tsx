@@ -1,56 +1,73 @@
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-const dummyTransactions = [
-  { id: "1", date: "2026-08-10", type: "expense", amount: 600, category: "カフェ", memo: "オーツミルク変更" },
-  { id: "2", date: "2026-08-11", type: "expense", amount: 5500, category: "美容", memo: "ネイルサロン" },
-  { id: "3", date: "2026-08-12", type: "expense", amount: 8000, category: "娯楽", memo: "横浜スタジアム 野球観戦＆クラフトビール" },
-  { id: "4", date: "2026-08-15", type: "income", amount: 200000, category: "給与", memo: "8月分お給料" },
-];
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-// 変更点1: 関数に async をつけ、paramsの型を Promise に変更
-export default async function TransactionDetail({ params }: { params: Promise<{ id: string }> }) {
-  
-  // 変更点2: await を使って、パラメータの準備ができるのを待ってから id を取り出す
-  const { id } = await params;
-  const transaction = dummyTransactions.find((tx) => tx.id === id);
+export default async function TransactionDetail({ params }: PageProps) {
+  // Next.jsの最新仕様に合わせてparamsをawaitする
+  const resolvedParams = await params;
+  const transactionId = parseInt(resolvedParams.id, 10);
 
+  // IDが数値でない場合は404ページを表示
+  if (isNaN(transactionId)) {
+    notFound();
+  }
+
+  // Prismaを使ってデータベースから該当する1件を取得
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+  });
+
+  // データが見つからない場合
   if (!transaction) {
     return (
       <main className="p-8 max-w-2xl mx-auto text-center">
-        <p>データが見つかりませんでした。</p>
-        <Link href="/" className="text-blue-500 underline mt-4 inline-block">一覧に戻る</Link>
+        <h1 className="text-xl font-bold mb-4 text-red-600">データが見つかりませんでした</h1>
+        <Link href="/" className="text-blue-500 hover:underline">
+          ← 一覧に戻る
+        </Link>
       </main>
     );
   }
 
   return (
     <main className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">📝 入出金 詳細</h1>
-      
-      <div className="border p-6 rounded shadow-sm bg-white">
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">日付</p>
-          <p className="text-lg font-medium">{transaction.date}</p>
+      <div className="mb-6">
+        <Link href="/" className="text-sm text-blue-500 hover:underline">
+          ← 一覧に戻る
+        </Link>
+      </div>
+
+      <div className="bg-white p-6 rounded shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-sm text-gray-500">{transaction.date}</span>
+          <span
+            className={`px-3 py-1 rounded text-sm font-bold ${
+              transaction.type === "income"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {transaction.type === "income" ? "収入" : "支出"}
+          </span>
         </div>
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">カテゴリ</p>
-          <p className="text-lg font-medium">{transaction.category}</p>
-        </div>
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">金額</p>
-          <p className={`text-2xl font-bold ${transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
-            {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toLocaleString()}円
-          </p>
-        </div>
-        <div className="mb-8">
-          <p className="text-sm text-gray-500">メモ</p>
-          <p className="text-lg font-medium">{transaction.memo}</p>
-        </div>
+
+        <h1 className="text-2xl font-bold mb-2">{transaction.category}</h1>
         
-        <div className="text-center">
-          <Link href="/" className="bg-gray-200 px-6 py-2 rounded font-bold hover:bg-gray-300 transition">
-            一覧に戻る
-          </Link>
+        <p className={`text-3xl font-extrabold mb-6 ${
+          transaction.type === "income" ? "text-blue-600" : "text-red-600"
+        }`}>
+          {transaction.type === "income" ? "+" : "-"}{transaction.amount.toLocaleString()}円
+        </p>
+
+        <div className="border-t pt-4">
+          <h2 className="text-sm text-gray-500 mb-1">メモ</h2>
+          <p className="text-gray-800 bg-gray-50 p-3 rounded">
+            {transaction.memo || "メモはありません"}
+          </p>
         </div>
       </div>
     </main>
