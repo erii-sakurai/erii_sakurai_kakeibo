@@ -1,132 +1,138 @@
-import { Suspense } from 'react';
+import Link from 'next/link';
+import DeleteButton from './components/DeleteButton';
 
-// 取引データの型定義
 interface Transaction {
   id: number;
   category: string;
   amount: number;
   date: string;
   type: 'income' | 'expense';
-  description?: string;
+  description: string | null;
 }
 
-// 収支サマリーの型定義
 interface Summary {
   total_income: number;
   total_expense: number;
   balance: number;
 }
 
-// FastAPI から取引一覧を取得
 async function getTransactions(): Promise<Transaction[]> {
   try {
     const res = await fetch('http://localhost:8000/api/transactions', {
-      cache: 'no-store', // 常に最新データを取得
+      cache: 'no-store',
     });
-    if (!res.ok) throw new Error('Failed to fetch transactions');
+    if (!res.ok) return [];
     return res.json();
-  } catch (error) {
-    console.error(error);
+  } catch {
     return [];
   }
 }
 
-// FastAPI からサマリーを取得
 async function getSummary(): Promise<Summary | null> {
   try {
     const res = await fetch('http://localhost:8000/api/transactions/summary', {
       cache: 'no-store',
     });
-    if (!res.ok) throw new Error('Failed to fetch summary');
+    if (!res.ok) return null;
     return res.json();
-  } catch (error) {
-    console.error(error);
+  } catch {
     return null;
   }
 }
 
-export default async function HomePage() {
+export default async function Home() {
   const [transactions, summary] = await Promise.all([
     getTransactions(),
     getSummary(),
   ]);
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">家計簿アプリ</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Section 4-3: Next.js × FastAPI 連携
-          </p>
-        </header>
+    <main className="min-h-screen bg-slate-50 py-10 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* ヘッダー */}
+        <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">家計簿アプリ</h1>
+            <p className="text-sm text-slate-500">Section 4-5: FastAPI × SQLAlchemy 連携</p>
+          </div>
+          <Link
+            href="/create"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm text-sm"
+          >
+            ＋ 新規登録
+          </Link>
+        </div>
 
-        {/* 収支サマリーカード */}
-        {summary && (
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-              <span className="text-sm font-medium text-gray-500">総収入</span>
-              <p className="text-2xl font-bold text-green-600 mt-1">
-                +¥{summary.total_income.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-              <span className="text-sm font-medium text-gray-500">総支出</span>
-              <p className="text-2xl font-bold text-red-600 mt-1">
-                -¥{summary.total_expense.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-              <span className="text-sm font-medium text-gray-500">収支差額</span>
-              <p
-                className={`text-2xl font-bold mt-1 ${
-                  summary.balance >= 0 ? 'text-blue-600' : 'text-red-600'
-                }`}
-              >
-                ¥{summary.balance.toLocaleString()}
-              </p>
-            </div>
-          </section>
-        )}
+        {/* サマリーカード */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <span className="text-sm font-medium text-slate-500">総収入</span>
+            <p className="text-2xl font-bold text-emerald-600 mt-2">
+              +¥{summary?.total_income.toLocaleString() ?? 0}
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <span className="text-sm font-medium text-slate-500">総支出</span>
+            <p className="text-2xl font-bold text-rose-600 mt-2">
+              -¥{summary?.total_expense.toLocaleString() ?? 0}
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <span className="text-sm font-medium text-slate-500">収支差額</span>
+            <p className="text-2xl font-bold text-blue-600 mt-2">
+              ¥{summary?.balance.toLocaleString() ?? 0}
+            </p>
+          </div>
+        </div>
 
-        {/* 取引一覧テーブル */}
-        <section className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">取引明細一覧</h2>
+        {/* 取引明細一覧 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-800">取引明細一覧</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-6 py-3 text-left font-medium">日付</th>
-                  <th className="px-6 py-3 text-left font-medium">カテゴリ</th>
-                  <th className="px-6 py-3 text-left font-medium">内容</th>
-                  <th className="px-6 py-3 text-right font-medium">金額</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                  <th className="px-6 py-3">日付</th>
+                  <th className="px-6 py-3">カテゴリ</th>
+                  <th className="px-6 py-3">内容</th>
+                  <th className="px-6 py-3 text-right">金額</th>
+                  <th className="px-6 py-3 text-center">操作</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100 text-sm">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
                       取引データがありません
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-gray-600">{t.date}</td>
+                  transactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 text-slate-600 whitespace-nowrap">{tx.date}</td>
                       <td className="px-6 py-4">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {t.category}
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                          {tx.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{t.description || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700">{tx.description || '-'}</td>
                       <td
-                        className={`px-6 py-4 text-right font-semibold ${
-                          t.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        className={`px-6 py-4 text-right font-semibold whitespace-nowrap ${
+                          tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
                         }`}
                       >
-                        {t.type === 'income' ? '+' : '-'}¥{t.amount.toLocaleString()}
+                        {tx.type === 'income' ? '+' : '-'}¥{tx.amount.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap space-x-2">
+                        <Link
+                          href={`/edit/${tx.id}`}
+                          className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors"
+                        >
+                          編集
+                        </Link>
+                        <DeleteButton id={tx.id} />
                       </td>
                     </tr>
                   ))
@@ -134,7 +140,7 @@ export default async function HomePage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
       </div>
     </main>
   );
