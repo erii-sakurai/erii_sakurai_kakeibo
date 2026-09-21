@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import DeleteButton from './components/DeleteButton';
+import SavingAdvice from './components/SavingAdvice'; // 追加
 
 interface Transaction {
   id: number;
@@ -53,7 +54,7 @@ export default async function Home() {
         <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">家計簿アプリ</h1>
-            <p className="text-sm text-slate-500">Section 4-5: FastAPI × SQLAlchemy 連携</p>
+            <p className="text-sm text-slate-500">Section 5-1: Mastra AI エージェント & ワークフロー連携</p>
           </div>
           <Link
             href="/create"
@@ -84,6 +85,9 @@ export default async function Home() {
             </p>
           </div>
         </div>
+
+        {/* AI 節約アドバイザー（ワークフロー連携） */}
+        <SavingAdvice />
 
         {/* 取引明細一覧 */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
