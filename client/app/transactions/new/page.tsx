@@ -38,14 +38,14 @@ export default function NewRecordPage() {
     // ③ データベース(Recordテーブル)に保存。日付はDate型に変換する
  
     await prisma.transaction.create({
-      data: {
-        title: validatedData.data.title,
-        amount: validatedData.data.amount,
-        type: validatedData.data.type,
-        category: validatedData.data.category,
-        date: new Date(validatedData.data.date),
-      },
-    });
+  data: {
+    title: validatedData.data.title,
+    amount: validatedData.data.amount,
+    type: validatedData.data.type,
+    category: validatedData.data.category,
+    date: validatedData.data.date, // ← new Date() を外してそのまま渡す
+  },
+});
 
     // ④ 保存が終わったら一覧画面に戻る
     redirect("/");
